@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version && npm --version)",
+      "Bash(npx create-next-app@14 . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm 2>&1)",
+      "Bash(npm run format:check 2>&1)",
+      "Bash(node -e \"const { YahooFinance } = require\\('yahoo-finance2'\\); const yf = new YahooFinance\\(\\); console.log\\(typeof yf.quote, typeof yf.historical\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/vix\" 2>&1 | python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('current_price:', d.get\\('current_price'\\)\\); print\\('percentile:', d.get\\('top_percentile'\\)\\); print\\('episodes:', d.get\\('convergence',{}\\).get\\('episode_count'\\)\\); print\\('error:', d.get\\('error'\\)\\)\")",
+      "Bash(git push -u origin main)",
+      "Bash(git push origin main 2>&1)",
+      "Bash(git remote add origin https://github.com/tkaifactory-hub/vix-monitor.git)",
+      "Bash(git checkout --orphan newbranch)",
+      "Bash(git add -A)"
+    ]
+  }
+}
