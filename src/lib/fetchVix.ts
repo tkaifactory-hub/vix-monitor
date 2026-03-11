@@ -1,8 +1,5 @@
-import YahooFinance from 'yahoo-finance2';
-
-const yahooFinance = new YahooFinance();
-
-const TICKER = '^VIX';
+const API_URL =
+  'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=5y';
 
 export interface VixEpisode {
   start: string;
@@ -34,32 +31,38 @@ export interface VixData {
     | { is_active: true; start_date: string; days_elapsed: number };
 }
 
+function toDateString(unixSec: number): string {
+  return new Date(unixSec * 1000).toISOString().slice(0, 10);
+}
+
 export async function fetchVixData(
   spikeThreshold = 30,
   recoveryThreshold = 20
 ): Promise<VixData> {
-  const end = new Date();
-  const start = new Date(end);
-  start.setFullYear(start.getFullYear() - 5);
-
-  // 現在値の取得
-  const quote = await yahooFinance.quote(TICKER);
-  const currentPrice = quote.regularMarketPrice ?? 0;
-
-  // 過去5年分の日次終値の取得
-  const historical = await yahooFinance.historical(TICKER, {
-    period1: start.toISOString().slice(0, 10),
-    period2: end.toISOString().slice(0, 10),
-    interval: '1d',
+  const res = await fetch(API_URL, {
+    headers: { 'User-Agent': 'Mozilla/5.0' },
   });
+  if (!res.ok) throw new Error(`Yahoo Finance API error: ${res.status}`);
 
-  // null/undefinedを除外してクリーンな配列を作成
-  const history = historical
-    .filter((row) => row.close != null)
-    .map((row) => ({
-      date: row.date.toISOString().slice(0, 10),
-      close: Math.round(row.close * 100) / 100,
-    }));
+  const json = await res.json();
+  const result = json.chart.result[0];
+  const meta = result.meta;
+  const timestamps: number[] = result.timestamp;
+  const rawCloses: (number | null)[] = result.indicators.quote[0].close;
+
+  const currentPrice: number = meta.regularMarketPrice;
+
+  // null を除外してクリーンな履歴を作成
+  const history: { date: string; close: number }[] = [];
+  for (let i = 0; i < timestamps.length; i++) {
+    const close = rawCloses[i];
+    if (close != null) {
+      history.push({
+        date: toDateString(timestamps[i]),
+        close: Math.round(close * 100) / 100,
+      });
+    }
+  }
 
   const closes = history.map((h) => h.close);
   const count = closes.length;
