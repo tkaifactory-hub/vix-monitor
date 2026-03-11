@@ -127,13 +127,13 @@ export default function Home() {
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <div className="w-full max-w-2xl rounded-lg border p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">VIX 恐怖指数チェッカー</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
+      <div className="w-full max-w-2xl rounded-lg border p-4 sm:p-8">
+        <div className="mb-6 flex items-center justify-between gap-2">
+          <h1 className="min-w-0 text-lg font-bold sm:text-2xl">VIX 恐怖指数チェッカー</h1>
           <button
             onClick={() => fetchData(spikeInput, recoveryInput)}
-            className="rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
+            className="flex-shrink-0 whitespace-nowrap rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
           >
             更新
           </button>
@@ -242,6 +242,7 @@ export default function Home() {
               <summary className="cursor-pointer text-xs text-gray-400 hover:text-gray-600">
                 エピソード詳細を表示
               </summary>
+              <div className="overflow-x-auto">
               <table className="mt-2 w-full text-xs text-gray-500">
                 <thead>
                   <tr className="border-b">
@@ -260,6 +261,7 @@ export default function Home() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </details>
           )}
         </div>
