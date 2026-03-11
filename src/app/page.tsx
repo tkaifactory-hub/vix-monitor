@@ -59,8 +59,8 @@ export default function Home() {
   const [data, setData] = useState<VixData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [spikeInput, setSpikeInput] = useState(30);
-  const [recoveryInput, setRecoveryInput] = useState(20);
+  const [spikeInput, setSpikeInput] = useState('30');
+  const [recoveryInput, setRecoveryInput] = useState('20');
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const fetchData = useCallback(async (spikeThreshold = 30, recoveryThreshold = 20) => {
@@ -89,14 +89,26 @@ export default function Home() {
     fetchData(30, 20);
   }, [fetchData]);
 
+  const handleStep = (current: string, setter: (v: string) => void, delta: number) => {
+    const n = parseInt(current, 10);
+    const base = isNaN(n) ? (delta > 0 ? THRESHOLD_MIN - 1 : THRESHOLD_MIN) : n;
+    setter(String(Math.max(THRESHOLD_MIN, Math.min(THRESHOLD_MAX, base + delta))));
+  };
+
+  const handleBlur = (value: string, setter: (v: string) => void, fallback: number) => {
+    if (value === '' || isNaN(parseInt(value, 10))) setter(String(fallback));
+  };
+
   const handleRecalculate = () => {
-    const err = validateThresholds(spikeInput, recoveryInput);
+    const spike = parseInt(spikeInput, 10);
+    const recovery = parseInt(recoveryInput, 10);
+    const err = validateThresholds(spike, recovery);
     if (err) {
       setValidationError(err);
       return;
     }
     setValidationError(null);
-    fetchData(spikeInput, recoveryInput);
+    fetchData(spike, recovery);
   };
 
   if (loading) {
@@ -112,7 +124,7 @@ export default function Home() {
       <main className="flex min-h-screen flex-col items-center justify-center p-8">
         <p className="mb-4 text-red-600">{error ?? '不明なエラーが発生しました'}</p>
         <button
-          onClick={() => fetchData(spikeInput, recoveryInput)}
+          onClick={() => fetchData(parseInt(spikeInput, 10) || 30, parseInt(recoveryInput, 10) || 20)}
           className="rounded border px-4 py-2 text-sm hover:bg-gray-50"
         >
           再試行
@@ -132,7 +144,7 @@ export default function Home() {
         <div className="mb-6 flex items-center justify-between gap-2">
           <h1 className="min-w-0 text-lg font-bold sm:text-2xl">VIX 恐怖指数チェッカー</h1>
           <button
-            onClick={() => fetchData(spikeInput, recoveryInput)}
+            onClick={() => fetchData(parseInt(spikeInput, 10) || 30, parseInt(recoveryInput, 10) || 20)}
             className="flex-shrink-0 whitespace-nowrap rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
           >
             更新
@@ -160,28 +172,60 @@ export default function Home() {
         <div className="mb-6 rounded-md border p-4">
           <p className="mb-3 text-sm font-medium text-gray-700">閾値設定</p>
           <div className="flex flex-wrap items-end gap-4">
-            <label className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1">
               <span className="text-xs text-gray-500">急騰開始閾値</span>
-              <input
-                type="number"
-                min={THRESHOLD_MIN}
-                max={THRESHOLD_MAX}
-                value={spikeInput}
-                onChange={(e) => setSpikeInput(Number(e.target.value))}
-                className="w-24 rounded border px-2 py-1 text-sm"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => handleStep(spikeInput, setSpikeInput, -1)}
+                  className="rounded-l border border-r-0 px-2.5 py-1 text-sm hover:bg-gray-50 active:bg-gray-100"
+                >
+                  −
+                </button>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={spikeInput}
+                  onChange={(e) => setSpikeInput(e.target.value.replace(/\D/g, ''))}
+                  onBlur={() => handleBlur(spikeInput, setSpikeInput, 30)}
+                  className="w-12 border-y px-1 py-1 text-center text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleStep(spikeInput, setSpikeInput, 1)}
+                  className="rounded-r border border-l-0 px-2.5 py-1 text-sm hover:bg-gray-50 active:bg-gray-100"
+                >
+                  ＋
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
               <span className="text-xs text-gray-500">収束完了閾値</span>
-              <input
-                type="number"
-                min={THRESHOLD_MIN}
-                max={THRESHOLD_MAX}
-                value={recoveryInput}
-                onChange={(e) => setRecoveryInput(Number(e.target.value))}
-                className="w-24 rounded border px-2 py-1 text-sm"
-              />
-            </label>
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => handleStep(recoveryInput, setRecoveryInput, -1)}
+                  className="rounded-l border border-r-0 px-2.5 py-1 text-sm hover:bg-gray-50 active:bg-gray-100"
+                >
+                  −
+                </button>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={recoveryInput}
+                  onChange={(e) => setRecoveryInput(e.target.value.replace(/\D/g, ''))}
+                  onBlur={() => handleBlur(recoveryInput, setRecoveryInput, 20)}
+                  className="w-12 border-y px-1 py-1 text-center text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleStep(recoveryInput, setRecoveryInput, 1)}
+                  className="rounded-r border border-l-0 px-2.5 py-1 text-sm hover:bg-gray-50 active:bg-gray-100"
+                >
+                  ＋
+                </button>
+              </div>
+            </div>
             <button
               onClick={handleRecalculate}
               disabled={loading}
